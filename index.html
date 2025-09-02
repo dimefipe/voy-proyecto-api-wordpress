@@ -1,207 +1,659 @@
-<!DOCTYPE html>
-<html lang="en"> 
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>Componente Portafolio</title>
-        <link rel="stylesheet" href="main.css" />
-    </head>
-    <body>
-        <section id="portafolioApp">
-            <!-- Buscador y Filtros del portafolio  -->
-            <div class="portafolio__filtros">
-                <!-- BUSCADOR  -->
-                <div class="portafolio__buscador--box">
-                    <input
-                        class="portafolio__buscador"
-                        type="text"
-                        v-model="searchTerm"
-                        placeholder="Buscar proyectos..."
-                        @input="debouncedSearch"
-                    />
-                </div>
+<!-- final2.html -->
+<style>
+  /* ====== CONTENEDOR APP ====== */
+  #portafolioApp {
+      font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      max-width: 1140px;
+      margin: auto;
+      height: auto;
+      min-height: 0;
+  }
+  #portafolioApp a { text-decoration: none; }
+  #portafolioApp button, #portafolioApp input {
+      font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  }
+  #portafolioApp input { padding: 0.75rem 1rem; }
+  #portafolioApp input:focus { outline: none; }
+  #portafolioApp button {
+      transition: 0.2s ease-in-out; cursor: pointer; padding: 0.5rem 1rem; outline: none; border: none;
+  }
 
-                <!-- FILTRO  -->
-                <div class="portafolio__filtros--box">
-                    <button
-                        :class="{ active: activeCategory === null }"
-                        @click="changeCategory(null)"
-                    >
-                        Todo
-                    </button>
-                    <button
-                        v-for="cat in categories"
-                        :key="cat.id"
-                        :class="{ active: activeCategory === cat.id }"
-                        @click="changeCategory(cat.id)"
-                    >
-                        {{ cat.name }}
-                    </button>
-                </div>
+  /* ====== FILTROS ====== */
+  #portafolioApp .portafolio__filtros{
+      display:flex; flex-direction:column; gap:1rem; justify-content:center; align-items:center; margin-bottom:2rem;
+  }
+  #portafolioApp .portafolio__buscador--box{ width:100%; display:flex; justify-content:center; }
+  #portafolioApp .portafolio__buscador{
+      background:#e9f6f8!important; border:3px solid #88bac1!important; border-radius:24px!important;
+      text-align:center; max-width:600px!important; width:100%!important;
+  }
+  #portafolioApp .portafolio__buscador:focus{ border:3px solid #ffb000!important; }
+  @media (max-width:1024px){
+      #portafolioApp .portafolio__buscador--box{ padding-top:.5rem; margin-bottom:.5rem; }
+      #portafolioApp .portafolio__buscador{ border:2px solid #88bac1!important; }
+      #portafolioApp .portafolio__buscador:focus{ border:2px solid #ffb000!important; }
+  }
+  @media (max-width:767px){
+      #portafolioApp .portafolio__buscador{
+          font-size:12px!important; padding:6px!important; min-height:inherit!important; height:inherit!important; border:2px solid #88bac1!important;
+      }
+      #portafolioApp .portafolio__buscador:focus{ border:2px solid #ffb000!important; }
+  }
+
+  #portafolioApp .portafolio__filtros--box{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+  #portafolioApp .portafolio__filtros button{ background:#00272d; color:#fff; border:1px solid #00424d; border-radius:8px; }
+  #portafolioApp .portafolio__filtros button:hover{ background:#00b5cf; }
+  #portafolioApp .portafolio__filtros button.active{ background:#ffb000; color:#001519; }
+
+  /* ====== GRID ====== */
+  #portafolioApp .portafolio__proyectos{
+      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1rem; --m-top:70px; padding-top:0px!important;
+  }
+  #portafolioApp .portafolio__proyectos-wrapper{ display:flow-root; margin-bottom:1rem; }
+
+  /* ====== CARD ====== */
+  #portafolioApp .portafolio__proyecto{
+      background:#00272d; border:1px solid #00424d; border-radius:16px; padding:20px; position:relative;
+      display:flex; flex-direction:column; justify-content:space-between; gap:8px;
+      margin-top:var(--m-top); margin-bottom:calc(var(--m-top) / 5); isolation:isolate;
+  }
+  #portafolioApp .portafolio__proyecto a{ display:flex; flex-direction:column; gap:8px; }
+
+  /* Imagen con skeleton propio */
+  #portafolioApp .portafolio__img{ aspect-ratio:1/1; position:relative; margin-top:calc(-1 * var(--m-top)); }
+  #portafolioApp .portafolio__img img{
+      display:block; width:100%; aspect-ratio:1/1; object-fit:cover;
+      mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+      opacity:0; transition:opacity .3s ease-in-out, transform .3s ease-in-out;
+  }
+  #portafolioApp .portafolio__img img.is-loaded{ opacity:1; }
+  #portafolioApp .img-skeleton{ position:absolute; inset:0; pointer-events:none; z-index:1; }
+  #portafolioApp .img-skeleton .skeleton-box{ height:100%; width:100%; border-radius:12px; }
+
+  #portafolioApp .portafolio__titulo h3{ color:#fff; font-size:16px; margin:0; transition:.3s; }
+  #portafolioApp .portafolio__proyecto a:hover h3{ color:#ffb000; }
+  #portafolioApp .portafolio__proyecto a:hover .portafolio__img img{ transform:scale(1.19) translateY(-20px); }
+
+  #portafolioApp .portafolio__categorias{ display:flex; flex-wrap:wrap; gap:10px; }
+  #portafolioApp .portafolio__categoria{
+      background:#00272d; border:1px solid #00424d; width:max-content; color:#b7bbbc;
+      padding:4px 8px; border-radius:8px; font-size:10px; cursor:pointer !important;
+      user-select:none; -webkit-user-select:none; display:inline-flex; align-items:center; line-height:1;
+  }
+  #portafolioApp .portafolio__categoria:hover{ background:#ffb000; color:#001519; }
+  #portafolioApp .portafolio__categoria *{ cursor:inherit; }
+
+  /* ====== SKELETON (listado inicial) ====== */
+  #portafolioApp .skeleton .portafolio__categoria{ pointer-events:none; }
+  #portafolioApp .skeleton-box{ position:relative; overflow:hidden; background:#09343b; border-radius:8px; }
+  #portafolioApp .skeleton-box::after{
+      content:""; position:absolute; inset:0; transform:translateX(-100%);
+      background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 100%);
+      animation:sk-shimmer 1.2s linear infinite; will-change:transform;
+  }
+  #portafolioApp .skeleton-img{ width:100%; aspect-ratio:1/1; border-radius:12px; }
+  #portafolioApp .skeleton-line{ height:14px; margin-top:10px; border-radius:6px; }
+  #portafolioApp .skeleton-title{ width:70%; }
+  #portafolioApp .skeleton-pill{ display:inline-block; height:18px; width:92px; border-radius:8px; border:1px solid #00424d; }
+  #portafolioApp .skeleton-pill.short{ width:64px; }
+
+  /* ====== TRANSITION-GROUP (entradas/salidas/reordenamientos) ====== */
+  #portafolioApp .card-enter-from{ opacity:0; transform:translateY(8px); }
+  #portafolioApp .card-enter-active{ transition:opacity .35s ease, transform .35s ease; }
+  #portafolioApp .card-enter-to{ opacity:1; transform:none; }
+
+  #portafolioApp .card-leave-from{ opacity:1; transform:none; }
+  #portafolioApp .card-leave-active{ transition:opacity .25s ease, transform .25s ease; pointer-events:none; }
+  #portafolioApp .card-leave-to{ opacity:0; transform:translateY(-4px); }
+
+  #portafolioApp .card-move{ transition:transform .35s ease; will-change:transform; }
+
+  /* 👉 primer pintado tras skeleton */
+  #portafolioApp .card-appear-from{ opacity:0; transform:translateY(8px); }
+  #portafolioApp .card-appear-active{ transition:opacity .35s ease, transform .35s ease; }
+  #portafolioApp .card-appear-to{ opacity:1; transform:none; }
+
+  @media (prefers-reduced-motion: reduce){
+      #portafolioApp .card-enter-active,
+      #portafolioApp .card-leave-active,
+      #portafolioApp .card-appear-active,
+      #portafolioApp .card-move{ transition:none !important; }
+  }
+
+  /* ====== PAGINADOR / EMPTY ====== */
+  #portafolioApp .portafolio__paginador{ display:flex; justify-content:center; gap:1rem; }
+  #portafolioApp .portafolio__paginador button{
+      font-size:12px; padding:8px 16px; border-radius:8px; background:#00272d; border:1px solid #00424d;
+      color:hsla(200,50%,100%,.7);
+  }
+  #portafolioApp .portafolio__paginador button.current{ background:#00b5cf!important; color:#fff!important; }
+  #portafolioApp .no-results{
+      color:#fff; text-align:center; padding:2rem; opacity:.5; display:flex; justify-content:center; align-items:center;
+      padding-bottom:100px; grid-column:1/-1;
+  }
+  #portafolioApp .no-results p{ margin:0; }
+
+  /* ====== TABLET / MÓVIL ====== */
+  @media (max-width:1024px){
+      #portafolioApp .portafolio__filtros button{ font-size:14px; }
+      #portafolioApp .portafolio__proyectos{ grid-template-columns:repeat(3, minmax(0, 1fr)); --m-top:60px; }
+      #portafolioApp .skeleton-title{ width:80%; }
+      #portafolioApp .skeleton-pill{ height:18px; }
+  }
+  @media (max-width:767px){
+      #portafolioApp .portafolio__filtros{
+          position:sticky; gap:.5rem; top:0; z-index:3; background:#001519;
+          mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
+          padding-top:.5rem; padding-bottom:1rem;
+      }
+      #portafolioApp .portafolio__filtros button{ font-size:10px; padding:6px 10px; line-height:1em; min-height:inherit; }
+      #portafolioApp .portafolio__proyectos{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; --m-top:50px; }
+      #portafolioApp .portafolio__proyecto{ padding:12px; }
+      #portafolioApp .portafolio__titulo h3{ font-size:12px; }
+      #portafolioApp .portafolio__categoria{ padding:2px 6px; font-size:8px; text-decoration:none; }
+      #portafolioApp .portafolio__paginador{ gap:.5rem; }
+      #portafolioApp .portafolio__paginador button{ font-size:10px; padding:4px 12px; border-radius:8px; }
+      #portafolioApp .skeleton-title{ width:85%; }
+      #portafolioApp .skeleton-pill{ height:16px; }
+  }
+
+  /* ====== SHIMMER KEYFRAMES (incluye fallback Safari) ====== */
+  @-webkit-keyframes sk-shimmer { 100% { -webkit-transform: translateX(100%); transform: translateX(100%); } }
+  @keyframes sk-shimmer { 100% { transform: translateX(100%); } }
+</style>
+
+
+<div id="portafolioApp">
+    
+    <div id="portafolioApp">
+  <!--<div class="portafolio__listado">-->
+  <!--  <div class="portafolio__proyectos-wrapper">-->
+  <!--    <div class="portafolio__proyectos">-->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+        
+        <!-- Card de ejemplo -->
+  <!--      <div class="portafolio__proyecto">-->
+  <!--        <a href="#" target="_blank" rel="noopener">-->
+  <!--          <div class="portafolio__img">-->
+              <!-- Pon/quita la clase is-loaded para ver la transición -->
+  <!--            <img-->
+  <!--              src="https://picsum.photos/seed/portafolio-demo/800/800"-->
+  <!--              alt="Proyecto de prueba"-->
+  <!--              class="is-loaded"-->
+  <!--              loading="lazy"-->
+  <!--              decoding="async"-->
+  <!--            />-->
+              <!-- Skeleton: déjalo con hidden; para verlo quita 'hidden' y quita 'is-loaded' del <img> -->
+  <!--            <div class="img-skeleton" hidden>-->
+  <!--              <div class="skeleton-box"></div>-->
+  <!--            </div>-->
+  <!--          </div>-->
+
+  <!--          <div class="portafolio__titulo">-->
+  <!--            <h3>Proyecto de Prueba</h3>-->
+  <!--          </div>-->
+  <!--        </a>-->
+  <!--        <div class="portafolio__categorias">-->
+  <!--          <span class="portafolio__categoria">Branding</span>-->
+  <!--          <span class="portafolio__categoria">Video y Motion</span>-->
+  <!--          <span class="portafolio__categoria">Web</span>-->
+  <!--        </div>-->
+  <!--      </div>-->
+        <!-- /Card de ejemplo -->
+
+        <!-- Duplica el bloque .portafolio__proyecto para maquetar más columnas/filas -->
+        
+  <!--    </div>-->
+  <!--  </div>-->
+  <!--</div>-->
+</div>
+    
+</div>
+
+<script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+<script>
+const { createApp, ref, onMounted } = Vue;
+
+createApp({
+  template: `
+    <div>
+      <div class="portafolio__filtros">
+        <div class="portafolio__buscador--box">
+          <input class="portafolio__buscador" type="text"
+                 v-model="searchTerm" placeholder="Buscar proyectos..."
+                 @input="debouncedSearch">
+        </div>
+        <div class="portafolio__filtros--box">
+          <button :class="{ active: activeCategory === null }" @click="changeCategory(null)">Todo</button>
+          <button v-for="cat in categories" :key="cat.id"
+                  :class="{ active: activeCategory === cat.id }"
+                  @click="changeCategory(cat.id)">{{ cat.name }}</button>
+        </div>
+      </div>
+
+      <div class="portafolio__listado">
+        <div class="portafolio__proyectos-wrapper">
+
+          <!-- SKELETON del grid en primera carga -->
+          <div class="portafolio__proyectos" v-if="loading">
+            <div class="portafolio__proyecto skeleton" v-for="n in skeletonItems" :key="'sk-'+n">
+              <a href="javascript:void(0)">
+                <div class="portafolio__img"><div class="skeleton-box skeleton-img"></div></div>
+                <div class="portafolio__titulo"><div class="skeleton-box skeleton-line skeleton-title"></div></div>
+              </a>
+              <div class="portafolio__categorias">
+                <span class="portafolio__categoria skeleton-box skeleton-pill"></span>
+                <span class="portafolio__categoria skeleton-box skeleton-pill"></span>
+                <span class="portafolio__categoria skeleton-box skeleton-pill short"></span>
+              </div>
             </div>
+          </div>
 
-            <div class="portafolio__listado">
-
-                <div class="portafolio__proyectos-wrapper">
-
-                    <!-- Loader  -->
-                    <div class="loader-local" v-if="loading">
-                        <span>Cargando Proyectos</span>
-                        <svg
-                            width="100"
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 200 200"
-                        >
-                            <circle
-                                fill="none"
-                                stroke-opacity="1"
-                                stroke="#FFB000"
-                                stroke-width=".5"
-                                cx="100"
-                                cy="100"
-                                r="0"
-                            >
-                                <animate
-                                    attributeName="r"
-                                    calcMode="spline"
-                                    dur="2"
-                                    values="1;80"
-                                    keyTimes="0;1"
-                                    keySplines="0 .2 .5 1"
-                                    repeatCount="indefinite"
-                                ></animate>
-                                <animate
-                                    attributeName="stroke-width"
-                                    calcMode="spline"
-                                    dur="2"
-                                    values="0;25"
-                                    keyTimes="0;1"
-                                    keySplines="0 .2 .5 1"
-                                    repeatCount="indefinite"
-                                ></animate>
-                                <animate
-                                    attributeName="stroke-opacity"
-                                    calcMode="spline"
-                                    dur="2"
-                                    values="1;0"
-                                    keyTimes="0;1"
-                                    keySplines="0 .2 .5 1"
-                                    repeatCount="indefinite"
-                                ></animate>
-                            </circle>
-                        </svg>
+          <!-- LISTA con transición de aparición por card -->
+          <div v-else>
+            <transition-group
+              name="card"
+              tag="div"
+              class="portafolio__proyectos"
+              appear
+            >
+              <div v-for="(item,i) in projects" :key="item.id" class="portafolio__proyecto">
+                <a :href="item.link" target="_blank" rel="noopener">
+                  <div class="portafolio__img">
+                    <img :src="item.image"
+                         :srcset="item.srcset && item.srcset.length ? item.srcset : undefined"
+                         sizes="(max-width:767px) 50vw, (max-width:1024px) 33vw, 25vw"
+                         :alt="item.title.rendered"
+                         :class="{'is-loaded': item._imgLoaded}"
+                         :fetchpriority="i < 4 ? 'high' : 'auto'"
+                         @load="onImgLoad(item, $event)"
+                         @error="onImgError(item, $event)"
+                         loading="lazy" decoding="async" />
+                    <!-- Skeleton SOLO de la imagen hasta que cargue -->
+                    <div v-if="!item._imgLoaded" class="img-skeleton">
+                      <div class="skeleton-box"></div>
                     </div>
-
-                    <div class="portafolio__proyectos" v-show="!loading">
-                        
-                        <!-- CARD DE PROYECTOS  -->
-                        <div
-                            v-if="projects.length > 0"
-                            class="portafolio__proyecto"
-                            v-for="item in projects"
-                            :key="item.id"
-                        >
-                            <a :href="item.link" target="_blank" rel="noopener">
-                                <div class="portafolio__img">
-                                    <img
-                                        :src="item.image"
-                                        :alt="item.title.rendered"
-                                    />
-                                </div>
-                                <div class="portafolio__titulo">
-                                    <h3>{{ item.title.rendered }}</h3>
-                                </div>
-                            </a>
-                            <div class="portafolio__categorias">
-                                <span
-                                    v-for="cat in item.project_cat_links"
-                                    :key="cat.id"
-                                    class="portafolio__categoria"
-                                    @click="changeCategory(cat.id)"
-                                >
-                                    {{ cat.name }}
-                                </span>
-                            </div>
-                        </div>
-
-                        <!-- SIN RESULTADOS  -->
-                        <div v-else class="no-results">
-                            <svg
-                                width="100"
-                                xmlns="http://www.w3.org/2000/svg"
-                                viewBox="0 0 200 200"
-                            >
-                                <circle
-                                    fill="none"
-                                    stroke-opacity="1"
-                                    stroke="#FFB000"
-                                    stroke-width=".5"
-                                    cx="100"
-                                    cy="100"
-                                    r="0"
-                                >
-                                    <animate
-                                        attributeName="r"
-                                        calcMode="spline"
-                                        dur="2"
-                                        values="1;80"
-                                        keyTimes="0;1"
-                                        keySplines="0 .2 .5 1"
-                                        repeatCount="indefinite"
-                                    ></animate>
-                                    <animate
-                                        attributeName="stroke-width"
-                                        calcMode="spline"
-                                        dur="2"
-                                        values="0;25"
-                                        keyTimes="0;1"
-                                        keySplines="0 .2 .5 1"
-                                        repeatCount="indefinite"
-                                    ></animate>
-                                    <animate
-                                        attributeName="stroke-opacity"
-                                        calcMode="spline"
-                                        dur="2"
-                                        values="1;0"
-                                        keyTimes="0;1"
-                                        keySplines="0 .2 .5 1"
-                                        repeatCount="indefinite"
-                                    ></animate>
-                                </circle>
-                            </svg>
-                        </div>
-
-                    </div>
-
+                  </div>
+                  <div class="portafolio__titulo"><h3>{{ item.title.rendered }}</h3></div>
+                </a>
+                <div class="portafolio__categorias">
+                  <span v-for="cat in item.project_cat_links" :key="cat.id"
+                        class="portafolio__categoria" @click="changeCategory(cat.id)">
+                    {{ cat.name }}
+                  </span>
                 </div>
+              </div>
+            </transition-group>
 
-                <div v-show="totalPages > 1" class="portafolio__paginador">
-                    <button
-                        @click="changePage(currentPage - 1)"
-                        :disabled="currentPage === 1"
-                    >
-                        Anterior
-                    </button>
-                    <button
-                        v-for="page in totalPages"
-                        :key="page"
-                        @click="changePage(page)"
-                        :class="{ current: currentPage === page }"
-                    >
-                        {{ page }}
-                    </button>
-                    <button
-                        @click="changePage(currentPage + 1)"
-                        :disabled="currentPage === totalPages"
-                    >
-                        Siguiente
-                    </button>
-                </div>
+            <div v-if="!projects.length" class="no-results"><p>Sin resultados</p></div>
+          </div>
 
-            </div>
+        </div>
 
-        </section>
-    </body>
-</html>
+        <div v-show="totalPages > 1" class="portafolio__paginador">
+          <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">Anterior</button>
+          <button v-for="page in totalPages" :key="page"
+                  @click="changePage(page)" :class="{ current: currentPage === page }">{{ page }}</button>
+          <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Siguiente</button>
+        </div>
+      </div>
+    </div>
+  `,
+  setup() {
+    const API_BASE = 'https://voy.digital/wp-json/wp/v2';
+    const PLACEHOLDER = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
 
-<script type="module" src="main.js"></script>
+    const projects       = ref([]);
+    const categories     = ref([]);
+    const activeCategory = ref(null);
+    const currentPage    = ref(1);
+    const totalPages     = ref(1);
+    const loading        = ref(false);
+    const itemsPerPage   = 8;
+    const searchTerm     = ref('');
+    const skeletonItems  = Array.from({ length: itemsPerPage }, (_, i) => i + 1);
+    let searchTimeout    = null;
+
+    const cache = new Map();
+    const keyFor = (p) => `${(activeCategory.value != null ? activeCategory.value : 'all')}|${(searchTerm.value||'').trim()}|${p}`;
+    let ctrl = null;
+
+    const buildImage = (media) => {
+      if (!media) return null;
+      const sizes = media?.media_details?.sizes || {};
+      const order = ['medium_large','large','medium','full','thumbnail'];
+      let src = media?.source_url || '';
+      for (const k of order) {
+        if (sizes[k]?.source_url) { src = sizes[k].source_url; break; }
+      }
+      const srcset = Object.values(sizes)
+        .map(s => (s?.source_url && s?.width) ? `${s.source_url} ${s.width}w` : '')
+        .filter(Boolean).join(', ');
+      return { src, srcset };
+    };
+
+    const fetchCategories = async () => {
+      try{
+        const url = new URL(`${API_BASE}/project-cat`);
+        url.searchParams.set('hide_empty','true');
+        url.searchParams.set('_fields','id,name,slug');
+        const res = await fetch(url,{cache:'no-store'});
+        categories.value = await res.json();
+      }catch(e){ console.error('Error categorías:',e); }
+    };
+
+    const fetchProjects = async (page=1) => {
+      const k = keyFor(page);
+      if (cache.has(k)) { const {items,total}=cache.get(k); projects.value=items; totalPages.value=total; return; }
+
+      if (ctrl) ctrl.abort();
+      ctrl = new AbortController();
+
+      loading.value = true;
+      try{
+        const url = new URL(`${API_BASE}/portfolio`);
+        url.searchParams.set('_embed','wp:featuredmedia');
+        url.searchParams.set('per_page', itemsPerPage);
+        url.searchParams.set('page', page);
+
+        const cat = activeCategory.value;
+        const q   = (searchTerm.value || '').trim();
+        if (cat) url.searchParams.set('project-cat', cat);
+        if (q)   url.searchParams.set('search', q);
+
+        const res  = await fetch(url,{cache:'no-store', signal:ctrl.signal});
+        const data = await res.json();
+        const total = parseInt(res.headers.get('X-WP-TotalPages')) || 1;
+        totalPages.value = total;
+
+        const items = (Array.isArray(data)?data:[]).map(post=>{
+          const media = post?._embedded?.['wp:featuredmedia']?.[0] || null;
+          const img   = buildImage(media);
+          const catObjs = (post['project-cat']||[])
+            .map(id=>categories.value.find(c=>c.id===id)).filter(Boolean);
+          const noMedia = !img;
+          return {
+            ...post,
+            image: noMedia ? PLACEHOLDER : img.src,
+            srcset: noMedia ? '' : img.srcset,
+            title : post.title,
+            project_cat_links: catObjs,
+            _imgLoaded: noMedia ? true : false,
+          };
+        });
+
+        projects.value = items;
+        cache.set(k,{items,total:totalPages.value});
+      }catch(e){
+        if(e.name!=='AbortError'){ console.error('Error proyectos:',e); projects.value=[]; totalPages.value=1; }
+      }finally{ loading.value=false; }
+    };
+
+    const onImgLoad = (item, ev) => {
+      const src = ev?.target?.currentSrc || ev?.target?.src || '';
+      item._imgLoaded = true; // si fuese placeholder también quitamos skeleton
+    };
+    const onImgError = (item, ev) => {
+      const img = ev?.target;
+      if (img) { img.src = PLACEHOLDER; img.removeAttribute('srcset'); }
+      item._imgLoaded = true;
+    };
+
+    const changeCategory = (categoryId) => {
+      activeCategory.value = categoryId;
+      if (searchTerm.value) searchTerm.value = ''; // limpia búsqueda al cambiar categoría
+      currentPage.value = 1;
+      updateURL();
+      fetchProjects(currentPage.value);
+    };
+ 
+    const changePage = (page) => {
+      if (page>=1 && page<=totalPages.value){
+        currentPage.value = page; updateURL(); fetchProjects(page);
+        const el=document.getElementById('portafolioApp'); if(el) el.scrollIntoView({behavior:'smooth'});
+      }
+    };
+
+    const updateURL = () => {
+      const sel = categories.value.find(c=>c.id===activeCategory.value);
+      const slug = sel?sel.slug:null;
+      const p = new URLSearchParams();
+      if (currentPage.value>1) p.set('page',currentPage.value);
+      if (slug) p.set('cat',slug);
+      const q=(searchTerm.value||'').trim(); if(q) p.set('search',q);
+      history.replaceState(null,'',`?${p.toString()}`);
+    };
+
+    const loadFromURL = () => {
+      const p = new URLSearchParams(window.location.search);
+      if (p.get('page')) currentPage.value = parseInt(p.get('page'),10);
+      const slug=p.get('cat'); if(slug && categories.value.length){
+        const m=categories.value.find(c=>c.slug===slug); if(m) activeCategory.value=m.id;
+      }
+      if (p.get('search')) searchTerm.value = p.get('search');
+    };
+
+    const debouncedSearch = () => {
+      clearTimeout(searchTimeout);
+      searchTimeout = setTimeout(()=>{ currentPage.value=1; updateURL(); fetchProjects(1); },650);
+    };
+
+    onMounted(async ()=>{ await fetchCategories(); loadFromURL(); await fetchProjects(currentPage.value); });
+
+    return {
+      loading, categories, activeCategory, currentPage, totalPages,
+      projects, changeCategory, changePage, searchTerm, debouncedSearch,
+      skeletonItems, onImgLoad, onImgError
+    };
+  }
+}).mount('#portafolioApp');
+</script>
