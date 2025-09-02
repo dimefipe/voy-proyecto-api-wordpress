@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Componente Portafolio</title>
+        <link rel="stylesheet" href="main.css" />
+    </head>
+    <body>
+        <section id="portafolioApp">
+            <!-- Buscador y Filtros del portafolio  -->
+            <div class="portafolio__filtros">
+                <!-- BUSCADOR  -->
+                <div class="portafolio__buscador--box">
+                    <input
+                        class="portafolio__buscador"
+                        type="text"
+                        v-model="searchTerm"
+                        placeholder="Buscar proyectos..."
+                        @input="debouncedSearch"
+                    />
+                </div>
+
+                <!-- FILTRO  -->
+                <div class="portafolio__filtros--box">
+                    <button
+                        :class="{ active: activeCategory === null }"
+                        @click="changeCategory(null)"
+                    >
+                        Todo
+                    </button>
+                    <button
+                        v-for="cat in categories"
+                        :key="cat.id"
+                        :class="{ active: activeCategory === cat.id }"
+                        @click="changeCategory(cat.id)"
+                    >
+                        {{ cat.name }}
+                    </button>
+                </div>
+            </div>
+
+            <div class="portafolio__listado">
+
+                <div class="portafolio__proyectos-wrapper">
+
+                    <!-- Loader  -->
+                    <div class="loader-local" v-if="loading">
+                        <span>Cargando Proyectos</span>
+                        <svg
+                            width="100"
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 200 200"
+                        >
+                            <circle
+                                fill="none"
+                                stroke-opacity="1"
+                                stroke="#FFB000"
+                                stroke-width=".5"
+                                cx="100"
+                                cy="100"
+                                r="0"
+                            >
+                                <animate
+                                    attributeName="r"
+                                    calcMode="spline"
+                                    dur="2"
+                                    values="1;80"
+                                    keyTimes="0;1"
+                                    keySplines="0 .2 .5 1"
+                                    repeatCount="indefinite"
+                                ></animate>
+                                <animate
+                                    attributeName="stroke-width"
+                                    calcMode="spline"
+                                    dur="2"
+                                    values="0;25"
+                                    keyTimes="0;1"
+                                    keySplines="0 .2 .5 1"
+                                    repeatCount="indefinite"
+                                ></animate>
+                                <animate
+                                    attributeName="stroke-opacity"
+                                    calcMode="spline"
+                                    dur="2"
+                                    values="1;0"
+                                    keyTimes="0;1"
+                                    keySplines="0 .2 .5 1"
+                                    repeatCount="indefinite"
+                                ></animate>
+                            </circle>
+                        </svg>
+                    </div>
+
+                    <div class="portafolio__proyectos" v-show="!loading">
+                        
+                        <!-- CARD DE PROYECTOS  -->
+                        <div
+                            v-if="projects.length > 0"
+                            class="portafolio__proyecto"
+                            v-for="item in projects"
+                            :key="item.id"
+                        >
+                            <a :href="item.link" target="_blank" rel="noopener">
+                                <div class="portafolio__img">
+                                    <img
+                                        :src="item.image"
+                                        :alt="item.title.rendered"
+                                    />
+                                </div>
+                                <div class="portafolio__titulo">
+                                    <h3>{{ item.title.rendered }}</h3>
+                                </div>
+                            </a>
+                            <div class="portafolio__categorias">
+                                <span
+                                    v-for="cat in item.project_cat_links"
+                                    :key="cat.id"
+                                    class="portafolio__categoria"
+                                    @click="changeCategory(cat.id)"
+                                >
+                                    {{ cat.name }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- SIN RESULTADOS  -->
+                        <div v-else class="no-results">
+                            <svg
+                                width="100"
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 200 200"
+                            >
+                                <circle
+                                    fill="none"
+                                    stroke-opacity="1"
+                                    stroke="#FFB000"
+                                    stroke-width=".5"
+                                    cx="100"
+                                    cy="100"
+                                    r="0"
+                                >
+                                    <animate
+                                        attributeName="r"
+                                        calcMode="spline"
+                                        dur="2"
+                                        values="1;80"
+                                        keyTimes="0;1"
+                                        keySplines="0 .2 .5 1"
+                                        repeatCount="indefinite"
+                                    ></animate>
+                                    <animate
+                                        attributeName="stroke-width"
+                                        calcMode="spline"
+                                        dur="2"
+                                        values="0;25"
+                                        keyTimes="0;1"
+                                        keySplines="0 .2 .5 1"
+                                        repeatCount="indefinite"
+                                    ></animate>
+                                    <animate
+                                        attributeName="stroke-opacity"
+                                        calcMode="spline"
+                                        dur="2"
+                                        values="1;0"
+                                        keyTimes="0;1"
+                                        keySplines="0 .2 .5 1"
+                                        repeatCount="indefinite"
+                                    ></animate>
+                                </circle>
+                            </svg>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div v-show="totalPages > 1" class="portafolio__paginador">
+                    <button
+                        @click="changePage(currentPage - 1)"
+                        :disabled="currentPage === 1"
+                    >
+                        Anterior
+                    </button>
+                    <button
+                        v-for="page in totalPages"
+                        :key="page"
+                        @click="changePage(page)"
+                        :class="{ current: currentPage === page }"
+                    >
+                        {{ page }}
+                    </button>
+                    <button
+                        @click="changePage(currentPage + 1)"
+                        :disabled="currentPage === totalPages"
+                    >
+                        Siguiente
+                    </button>
+                </div>
+                
+            </div>
+
+        </section>
+    </body>
+</html>
+
+<script type="module" src="main.js"></script>
