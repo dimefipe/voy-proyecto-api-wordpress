@@ -509,151 +509,161 @@ createApp({
     </div>
   `,
   setup() {
-    const API_BASE = 'https://voy.digital/wp-json/wp/v2';
+    // 👉 NUEVO endpoint combinado
+    const API_BASE = 'https://voy.digital/wp-json/voy/v1';
     const PLACEHOLDER = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR4nGNgYAAAAAMAASsJTYQAAAAASUVORK5CYII=';
 
     const projects       = ref([]);
     const categories     = ref([]);
-    const activeCategory = ref(null);
+    const activeCategory = ref(null); // guarda el ID de la categoría seleccionada
     const currentPage    = ref(1);
     const totalPages     = ref(1);
     const loading        = ref(false);
     const itemsPerPage   = 8;
     const searchTerm     = ref('');
     const skeletonItems  = Array.from({ length: itemsPerPage }, (_, i) => i + 1);
-    let searchTimeout    = null;
+    let   searchTimeout  = null;
 
+    // cache simple en memoria
     const cache = new Map();
-    const keyFor = (p) => `${(activeCategory.value != null ? activeCategory.value : 'all')}|${(searchTerm.value||'').trim()}|${p}`;
+    const keyFor = (p) =>
+      `${activeCategory.value != null ? activeCategory.value : 'all'}|${(searchTerm.value || '').trim()}|${p}`;
     let ctrl = null;
 
-    const buildImage = (media) => {
-      if (!media) return null;
-      const sizes = media?.media_details?.sizes || {};
-      const order = ['medium_large','large','medium','full','thumbnail'];
-      let src = media?.source_url || '';
-      for (const k of order) {
-        if (sizes[k]?.source_url) { src = sizes[k].source_url; break; }
-      }
-      const srcset = Object.values(sizes)
-        .map(s => (s?.source_url && s?.width) ? `${s.source_url} ${s.width}w` : '')
-        .filter(Boolean).join(', ');
-      return { src, srcset };
-    };
-
-    const fetchCategories = async () => {
-      try{
-        const url = new URL(`${API_BASE}/project-cat`);
-        url.searchParams.set('hide_empty','true');
-        url.searchParams.set('_fields','id,name,slug');
-        const res = await fetch(url,{cache:'no-store'});
-        categories.value = await res.json();
-      }catch(e){ console.error('Error categorías:',e); }
-    };
-
-    const fetchProjects = async (page=1) => {
+    // Llama al endpoint combinado: /voy/v1/portfolio
+    const fetchAll = async (page = 1) => {
       const k = keyFor(page);
-      if (cache.has(k)) { const {items,total}=cache.get(k); projects.value=items; totalPages.value=total; return; }
+      if (cache.has(k)) {
+        const { items, cats, total } = cache.get(k);
+        projects.value   = items;
+        totalPages.value = total;
+        if (!categories.value.length && cats?.length) categories.value = cats;
+        return;
+      }
 
       if (ctrl) ctrl.abort();
       ctrl = new AbortController();
 
       loading.value = true;
-      try{
+      try {
         const url = new URL(`${API_BASE}/portfolio`);
-        url.searchParams.set('_embed','wp:featuredmedia');
         url.searchParams.set('per_page', itemsPerPage);
         url.searchParams.set('page', page);
 
-        const cat = activeCategory.value;
-        const q   = (searchTerm.value || '').trim();
-        if (cat) url.searchParams.set('project-cat', cat);
-        if (q)   url.searchParams.set('search', q);
+        const q = (searchTerm.value || '').trim();
+        if (q) url.searchParams.set('search', q);
+        if (activeCategory.value) url.searchParams.set('category', activeCategory.value); // id o slug
 
-        const res  = await fetch(url,{cache:'no-store', signal:ctrl.signal});
+        const res  = await fetch(url.toString(), { signal: ctrl.signal, cache: 'no-store' });
         const data = await res.json();
-        const total = parseInt(res.headers.get('X-WP-TotalPages')) || 1;
-        totalPages.value = total;
 
-        const items = (Array.isArray(data)?data:[]).map(post=>{
-          const media = post?._embedded?.['wp:featuredmedia']?.[0] || null;
-          const img   = buildImage(media);
-          const catObjs = (post['project-cat']||[])
-            .map(id=>categories.value.find(c=>c.id===id)).filter(Boolean);
-          const noMedia = !img;
+        const items = (data.projects || []).map(post => {
+          const noMedia = !post.image;
           return {
             ...post,
-            image: noMedia ? PLACEHOLDER : img.src,
-            srcset: noMedia ? '' : img.srcset,
-            title : post.title,
-            project_cat_links: catObjs,
+            image: noMedia ? PLACEHOLDER : post.image,
+            srcset: post.srcset || '',
             _imgLoaded: noMedia ? true : false,
           };
         });
 
-        projects.value = items;
-        cache.set(k,{items,total:totalPages.value});
-      }catch(e){
-        if(e.name!=='AbortError'){ console.error('Error proyectos:',e); projects.value=[]; totalPages.value=1; }
-      }finally{ loading.value=false; }
+        projects.value   = items;
+        totalPages.value = data.total_pages || 1;
+        if (!categories.value.length && Array.isArray(data.categories)) {
+          categories.value = data.categories;
+        }
+
+        cache.set(k, { items, cats: categories.value, total: totalPages.value });
+      } catch (e) {
+        if (e.name !== 'AbortError') {
+          console.error('Error fetchAll:', e);
+          projects.value = [];
+          totalPages.value = 1;
+        }
+      } finally {
+        loading.value = false;
+      }
     };
 
-    const onImgLoad = (item, ev) => {
-      const src = ev?.target?.currentSrc || ev?.target?.src || '';
-      item._imgLoaded = true; // si fuese placeholder también quitamos skeleton
-    };
+    // Img handlers
+    const onImgLoad = (item) => { item._imgLoaded = true; };
     const onImgError = (item, ev) => {
       const img = ev?.target;
       if (img) { img.src = PLACEHOLDER; img.removeAttribute('srcset'); }
       item._imgLoaded = true;
     };
 
+    // UI actions
     const changeCategory = (categoryId) => {
       activeCategory.value = categoryId;
-      if (searchTerm.value) searchTerm.value = ''; // limpia búsqueda al cambiar categoría
+      if (searchTerm.value) searchTerm.value = '';
       currentPage.value = 1;
       updateURL();
-      fetchProjects(currentPage.value);
+      fetchAll(currentPage.value);
     };
- 
+
     const changePage = (page) => {
-      if (page>=1 && page<=totalPages.value){
-        currentPage.value = page; updateURL(); fetchProjects(page);
-        const el=document.getElementById('portafolioApp'); if(el) el.scrollIntoView({behavior:'smooth'});
+      if (page >= 1 && page <= totalPages.value){
+        currentPage.value = page;
+        updateURL();
+        fetchAll(page);
+        const el = document.getElementById('portafolioApp');
+        if (el) el.scrollIntoView({ behavior: 'smooth' });
       }
     };
 
     const updateURL = () => {
-      const sel = categories.value.find(c=>c.id===activeCategory.value);
-      const slug = sel?sel.slug:null;
+      const sel  = categories.value.find(c => c.id === activeCategory.value);
+      const slug = sel ? sel.slug : null;
       const p = new URLSearchParams();
-      if (currentPage.value>1) p.set('page',currentPage.value);
-      if (slug) p.set('cat',slug);
-      const q=(searchTerm.value||'').trim(); if(q) p.set('search',q);
-      history.replaceState(null,'',`?${p.toString()}`);
+      if (currentPage.value > 1) p.set('page', currentPage.value);
+      if (slug) p.set('cat', slug);
+      const q = (searchTerm.value || '').trim(); if (q) p.set('search', q);
+      history.replaceState(null, '', `?${p.toString()}`);
     };
 
+    // Lee ?page, ?cat (slug) y ?search del URL
     const loadFromURL = () => {
       const p = new URLSearchParams(window.location.search);
-      if (p.get('page')) currentPage.value = parseInt(p.get('page'),10);
-      const slug=p.get('cat'); if(slug && categories.value.length){
-        const m=categories.value.find(c=>c.slug===slug); if(m) activeCategory.value=m.id;
-      }
+      if (p.get('page')) currentPage.value = parseInt(p.get('page'), 10) || 1;
+      const slug = p.get('cat');
       if (p.get('search')) searchTerm.value = p.get('search');
+
+      // Cuando ya tengamos categories desde la primera llamada, resolvemos el slug a ID
+      const tryResolveSlug = () => {
+        if (!slug || !categories.value.length) return;
+        const m = categories.value.find(c => c.slug === slug);
+        if (m) activeCategory.value = m.id;
+      };
+      return tryResolveSlug;
     };
 
     const debouncedSearch = () => {
       clearTimeout(searchTimeout);
-      searchTimeout = setTimeout(()=>{ currentPage.value=1; updateURL(); fetchProjects(1); },650);
+      searchTimeout = setTimeout(() => {
+        currentPage.value = 1;
+        updateURL();
+        fetchAll(1);
+      }, 650);
     };
 
-    onMounted(async ()=>{ await fetchCategories(); loadFromURL(); await fetchProjects(currentPage.value); });
+    onMounted(async () => {
+      const resolveSlug = loadFromURL();
+      await fetchAll(currentPage.value); // 1ª carga (trae también categorías)
+      resolveSlug && resolveSlug();      // si venía ?cat=slug, conviértelo a ID
+      if (activeCategory.value) await fetchAll(currentPage.value); // recarga con la cat aplicada
+    });
 
     return {
+      // state
       loading, categories, activeCategory, currentPage, totalPages,
-      projects, changeCategory, changePage, searchTerm, debouncedSearch,
-      skeletonItems, onImgLoad, onImgError
+      projects, searchTerm, skeletonItems,
+      // actions
+      changeCategory, changePage, debouncedSearch,
+      // img handlers
+      onImgLoad, onImgError
     };
   }
 }).mount('#portafolioApp');
 </script>
+
