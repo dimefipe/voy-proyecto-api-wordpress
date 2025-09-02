@@ -3,7 +3,7 @@
   font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   max-width: 1140px;
   /* background-color: red; si no lo necesitas, quítalo */
-  margin: auto;
+  margin: auto; 
   height: auto;
   min-height: 0;
 }
