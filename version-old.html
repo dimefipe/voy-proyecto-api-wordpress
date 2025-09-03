@@ -1,0 +1,620 @@
+<style>
+  .portafolio__filtros {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .portafolio__filtros button {
+    background: #00272D;
+    color: white;
+    border: 1px solid #00424D;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    height: max-content!important;
+  }
+
+  .portafolio__filtros button:hover {
+    background-color: #00B5CF;
+  }
+
+  .portafolio__filtros button.active {
+    background-color: #FFB000;
+    color: #001519;
+  }
+
+  .portafolio__proyectos {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    padding-top: 100px;
+    gap: 1rem;
+    row-gap: 124px;
+  }
+  
+  
+
+  .portafolio__proyecto {
+    background-color: #00272D;
+    border: 1px solid #00424D;
+    border-radius: 16px;
+    padding: 20px;
+    padding-top: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 8px;
+  }
+  
+  
+  
+
+  .portafolio__proyecto a {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .portafolio__img {
+    position: relative;
+  }
+
+  .portafolio__img img {
+    position: absolute;
+    bottom: 0px;
+    width: 100%;
+    mask-image: linear-gradient(
+      to bottom,
+      rgba(0, 0, 0, 1) 0%,
+      rgba(0, 0, 0, 1) 60%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    transition: 0.3s ease-in-out;
+  }
+
+  .portafolio__titulo h3 {
+    color: white;
+    font-size: 16px;
+    margin: 0;
+    transition: 0.3s ease-in-out;
+  }
+
+  .portafolio__proyecto a:hover h3 {
+    color: #FFB000;
+  }
+
+  .portafolio__proyecto a:hover .portafolio__img img {
+    transform: scale(1.17) translateY(-20px);
+  }
+
+  .portafolio__categorias {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .portafolio__categoria {
+    background: #00272D;
+    border: 1px solid #00424D;
+    width: max-content;
+    color: #B7BBBC;
+    padding: 4px 8px;
+    border-radius: 8px;
+    font-size: 10px;
+    text-decoration: none;
+  }
+
+  .portafolio__categoria:hover {
+    background-color: #FFB000;
+    color: #001519;
+  }
+
+  /* Loader */
+  .loader {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    font-size: 1.5rem;
+    color: white;
+    span {
+        opacity: 50%;
+    }
+  }
+  
+  @media screen and (max-width: 1024px){
+      .portafolio__filtros button {
+          font-size: 14px;
+      }
+      
+      .portafolio__proyectos {
+        grid-template-columns: repeat(3, 1fr);
+      }
+      
+      .portafolio__proyecto {
+          padding-top: 100px;
+      }
+  }
+  
+  @media screen and (max-width: 767px){
+      .portafolio__filtros {
+          position: sticky;
+          gap: .5rem;
+          top: calc(60px);
+          z-index: 3;
+          background-color: #001519;
+          mask-image: linear-gradient(
+              to bottom,
+              rgba(0, 0, 0, 1) 0%,
+              rgba(0, 0, 0, 1) 90%,
+              rgba(0, 0, 0, 0) 100%
+            );
+        padding-top: .5rem;
+        padding-bottom: 1rem;
+      }
+      
+      .portafolio__filtros button {
+          font-size: 12px;
+          padding: 6px 12px;
+          line-height: 1em;
+      }
+      
+      .portafolio__proyectos {
+        grid-template-columns: repeat(2, 1fr);
+        padding-top: 40px;
+        grid-row-gap: 70px;
+      }
+      
+      .portafolio__proyecto {
+        background-color: #00272D;
+        border: 1px solid #00424D;
+        border-radius: 16px;
+        padding: 12px;
+        padding-top: 100px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      
+      .portafolio__titulo h3 {
+        font-size: 12px;
+      }
+      
+      .portafolio__categoria {
+        background: #00272D;
+        border: 1px solid #00424D;
+        width: max-content;
+        color: #B7BBBC;
+        padding: 2px 6px;
+        border-radius: 8px;
+        font-size: 8px;
+        text-decoration: none;
+      }
+      
+  }
+    .portafolio__filtros {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-bottom: 2rem;
+    }
+
+    .portafolio__filtros button {
+        background: transparent;
+        color: white;
+        background: #00272D;
+        border: 1px solid #00424D;
+        border-radius: 8px;
+    }
+    
+    .portafolio__filtros button:hover {
+        background-color: #00B5CF;
+    }
+    
+    .portafolio__filtros button.active {
+        background-color: #FFB000;
+        color: #001519;
+    }
+    
+    
+    .portafolio__proyectos {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        
+        padding-top: 100px;
+        grid-gap: 1rem;
+        grid-row-gap: 124px;
+    }
+    
+    .portafolio__proyecto {
+        background-color: #00272D;
+        border: 1px solid #00424D;
+        border-radius: 16px;
+        padding: 20px;
+        position: relative;
+        padding-top: 180px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 8px;
+    }
+    
+    
+    .portafolio__proyecto a {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .portafolio__img {
+        position: relative;
+        
+    }
+    
+    .portafolio__img img {
+        position: absolute;
+        bottom: 0px;
+        mask-image: linear-gradient(
+    to bottom,
+    rgba(0, 0, 0, 1) 0%,       /* opaco al 0% */
+    rgba(0, 0, 0, 1) 60%,      /* sigue opaco hasta el 60% */
+    rgba(0, 0, 0, 0) 100%      /* se desvanece hasta 100% */
+  );
+  transition: .3s ease-in-out;
+    }
+    
+    .portafolio__titulo h3 {
+        color: white;
+        font-size: 16px;
+        transition: .3s ease-in-out;
+        margin: 0px;
+    }
+    
+    .portafolio__proyecto a:hover h3 {
+        color: #FFB000;
+    }
+    
+    .portafolio__proyecto a:hover .portafolio__img img {
+        transform: scale(1.17) translateY(-20px);
+    }
+    
+    .portafolio__categorias {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    .portafolio__categoria {
+        background: #00272D;
+        border: 1px solid #00424D;
+        width: max-content;
+        color: #B7BBBC;
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 10px;
+    }
+    
+    .portafolio__categoria:hover {
+        background-color: #FFB000;
+        color: #001519;
+    }
+    
+    @media screen and (max-width: 767px){
+        
+       
+        .portafolio__filtros button {
+          font-size: 10px;
+          padding: 6px 10px;
+          line-height: 1em;
+          min-height: inherit;
+      }
+    }
+    
+</style>
+<!--<section class="portafolio">-->
+<!--    <div class="portafolio__filtros">-->
+<!--        <button class="active">Todo</button>-->
+<!--        <button>Branding</button>-->
+<!--        <button>UI/UX</button>-->
+<!--        <button>Video y Motion</button>-->
+<!--        <button>Web</button>-->
+<!--    </div>-->
+<!--    <div class="portafolio__proyectos">-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/alqamari.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Alqamari-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--                <a href="#" class="portafolio__categoria">UI/UX</a>-->
+<!--                <a href="#" class="portafolio__categoria">Video y motion</a>-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/pekes.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Escuela Pekes de Temuco-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--                <a href="#" class="portafolio__categoria">UI/UX</a>-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/museo.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Museo Nacional Ferroviario Pablo Neruda-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/michi.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Michihouse Travels-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/alqamari.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Alqamari-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--                <a href="#" class="portafolio__categoria">UI/UX</a>-->
+<!--                <a href="#" class="portafolio__categoria">Video y motion</a>-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/pekes.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Escuela Pekes de Temuco-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--                <a href="#" class="portafolio__categoria">UI/UX</a>-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/museo.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Museo Nacional Ferroviario Pablo Neruda-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Branding</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--        <div class="portafolio__proyecto">-->
+<!--            <a href="#">-->
+<!--                <div class="portafolio__img">-->
+<!--                    <img src="https://voy.digital/wp-content/uploads/2025/07/michi.jpg">-->
+<!--                </div>-->
+<!--                <div class="portafolio__titulo">-->
+<!--                    <h3>-->
+<!--                        Michihouse Travels-->
+<!--                    </h3>-->
+<!--                </div>-->
+<!--            </a>-->
+            
+<!--            <div class="portafolio__categorias">-->
+<!--                <a href="#" class="portafolio__categoria">Web</a>-->
+<!--            </div>-->
+<!--        </div>-->
+<!--    </div>-->
+<!--</section>-->
+</style>
+
+<section id="portafolioApp">
+  <div v-if="loading" class="loader">
+    <span>Cargando Proyectos</span>
+    <svg width="100" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200">
+      <circle fill="none" stroke-opacity="1" stroke="#FFB000" stroke-width=".5" cx="100" cy="100" r="0">
+        <animate attributeName="r" calcMode="spline" dur="2" values="1;80" keyTimes="0;1" keySplines="0 .2 .5 1" repeatCount="indefinite" />
+        <animate attributeName="stroke-width" calcMode="spline" dur="2" values="0;25" keyTimes="0;1" keySplines="0 .2 .5 1" repeatCount="indefinite" />
+        <animate attributeName="stroke-opacity" calcMode="spline" dur="2" values="1;0" keyTimes="0;1" keySplines="0 .2 .5 1" repeatCount="indefinite" />
+      </circle>
+    </svg>
+  </div>
+
+  <template v-else>
+    <div class="portafolio__filtros">
+      <button
+        :class="{ active: activeCategory === null }"
+        @click="filterBySlug(null)"
+      >
+        Todo
+      </button>
+      <button
+        v-for="cat in categories"
+        :key="cat.id"
+        :class="{ active: activeCategory === cat.slug }"
+        @click="filterBySlug(cat.slug)"
+      >
+        {{ cat.name }}
+      </button>
+    </div>
+
+    <div class="portafolio__proyectos">
+      <div
+        class="portafolio__proyecto"
+        v-for="item in filteredProjects.slice(0, 8)"
+        :key="item.id"
+      >
+        <a :href="item.link" target="_blank" rel="noopener">
+          <div class="portafolio__img">
+            <img :src="item.image" :alt="item.title.rendered" />
+          </div>
+          <div class="portafolio__titulo">
+            <h3>{{ item.title.rendered }}</h3>
+          </div>
+        </a>
+
+        <div class="portafolio__categorias">
+          <a
+            v-for="cat in item.project_cat_links"
+            :key="cat.id"
+            class="portafolio__categoria"
+            :href="'/portafolio?cat=' + cat.slug"
+          >
+            {{ cat.name }}
+          </a>
+        </div>
+      </div>
+    </div>
+  </template>
+</section>
+
+<script type="module">
+  import {
+    createApp,
+    ref,
+    computed,
+    onMounted
+  } from 'https://unpkg.com/vue@3/dist/vue.esm-browser.js'
+
+  createApp({
+    setup() {
+      const projects = ref([])
+      const categories = ref([])
+      const activeCategory = ref(null)
+      const loading = ref(true)
+
+      const getQueryParam = (param) => {
+        const urlParams = new URLSearchParams(window.location.search)
+        return urlParams.get(param)
+      }
+
+      const updateURL = (slug) => {
+        const newUrl = slug ? `/portafolio?cat=${slug}` : '/portafolio'
+        window.history.pushState({}, '', newUrl)
+      }
+
+      const filterBySlug = (slug) => {
+        activeCategory.value = slug
+        updateURL(slug)
+      }
+
+      const fetchProjects = async () => {
+        try {
+          const res = await fetch('https://voy.digital/wp-json/wp/v2/portfolio?_embed&per_page=4')
+          const data = await res.json()
+
+          const catRes = await fetch('https://voy.digital/wp-json/wp/v2/project-cat')
+          const catData = await catRes.json()
+
+          categories.value = catData.filter(cat =>
+            data.some(post => post['project-cat']?.includes(cat.id))
+          )
+
+          const sorted = [...data]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+
+          projects.value = sorted.map(post => {
+            const media = post._embedded?.['wp:featuredmedia']?.[0]?.source_url || ''
+            const catObjects = post['project-cat']
+              .map(id => catData.find(c => c.id === id))
+              .filter(Boolean)
+
+            return {
+              ...post,
+              image: media,
+              project_cat_links: catObjects
+            }
+          })
+
+          const initialCat = getQueryParam('cat')
+          if (initialCat) {
+            const match = catData.find(c => c.slug === initialCat)
+            if (match) activeCategory.value = match.slug
+          }
+
+        } catch (error) {
+          console.error('Error al cargar los proyectos:', error)
+        } finally {
+          loading.value = false
+        }
+      }
+
+      const filteredProjects = computed(() => {
+        if (!activeCategory.value) return projects.value
+        return projects.value.filter(p =>
+          p.project_cat_links.some(c => c.slug === activeCategory.value)
+        )
+      })
+
+      onMounted(fetchProjects)
+
+      return {
+        projects,
+        categories,
+        filteredProjects,
+        activeCategory,
+        loading,
+        filterBySlug
+      }
+    }
+  }).mount('#portafolioApp')
+</script>
+
