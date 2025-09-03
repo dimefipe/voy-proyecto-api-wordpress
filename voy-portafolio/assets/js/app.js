@@ -15,14 +15,15 @@
         <div>
           <div class="portafolio__filtros">
             <div v-if="CONFIG.ENABLE_SEARCH" class="portafolio__buscador--box">
-              <input class="portafolio__buscador" type="text"
+              <input class="portafolio__buscador voy-input" type="text"
                      v-model="searchTerm" placeholder="Buscar proyectos..."
                      @input="debouncedSearch">
             </div>
             <div v-if="CONFIG.ENABLE_FILTERS" class="portafolio__filtros--box">
-              <button :class="{ active: activeCategory === null }" @click="changeCategory(null)">Todo</button>
+              <button :class="['voy-btn', { active: activeCategory === null }]"
+                      @click="changeCategory(null)">Todo</button>
               <button v-for="cat in categories" :key="cat.id"
-                      :class="{ active: activeCategory === cat.id }"
+                      :class="['voy-btn', { active: activeCategory === cat.id }]"
                       @click="changeCategory(cat.id)">{{ cat.name }}</button>
             </div>
           </div>
@@ -87,10 +88,10 @@
             </div>
 
             <div v-if="CONFIG.ENABLE_PAGINATOR && totalPages > 1" class="portafolio__paginador">
-              <button @click="changePage(currentPage - 1)" :disabled="currentPage === 1">Anterior</button>
-              <button v-for="page in totalPages" :key="page"
+              <button class="voy-btn" @click="changePage(currentPage - 1)" :disabled="currentPage === 1">Anterior</button>
+              <button class="voy-btn" v-for="page in totalPages" :key="page"
                       @click="changePage(page)" :class="{ current: currentPage === page }">{{ page }}</button>
-              <button @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Siguiente</button>
+              <button class="voy-btn" @click="changePage(currentPage + 1)" :disabled="currentPage === totalPages">Siguiente</button>
             </div>
           </div>
         </div>
@@ -224,32 +225,47 @@
           }
         };
 
+        // Estado -> URL (usa ?c=; si no hay slug, escribe ID)
         const updateURL = () => {
-          const sel = categories.value.find(c => c.id === activeCategory.value);
+          const sel  = categories.value.find(c => c.id === activeCategory.value);
           const slug = sel ? sel.slug : null;
           const p = new URLSearchParams();
 
           if (CONFIG.ENABLE_PAGINATOR && currentPage.value > 1) p.set('page', currentPage.value);
-          if (CONFIG.ENABLE_FILTERS && slug) p.set('cat', slug);
+          if (CONFIG.ENABLE_FILTERS && (slug || activeCategory.value != null)) {
+            p.set('c', slug || String(activeCategory.value));
+          }
           if (CONFIG.ENABLE_SEARCH) {
             const q = (searchTerm.value || '').trim();
             if (q) p.set('search', q);
           }
-          history.replaceState(null, '', `?${p.toString()}`);
+          const qs = p.toString();
+          const newUrl = qs ? `?${qs}` : window.location.pathname;
+          history.replaceState(null, '', newUrl);
         };
 
+        // URL -> Estado (lee ?c= y soporta legacy ?cat=; acepta slug o ID)
         const loadFromURL = () => {
           const p = new URLSearchParams(window.location.search);
-          if (CONFIG.ENABLE_PAGINATOR && p.get('page')) currentPage.value = parseInt(p.get('page'), 10) || currentPage.value;
-          const slug = (CONFIG.ENABLE_FILTERS ? p.get('cat') : null);
+          if (CONFIG.ENABLE_PAGINATOR && p.get('page')) {
+            const np = parseInt(p.get('page'), 10);
+            if (!Number.isNaN(np)) currentPage.value = np;
+          }
+
+          const rawCat = (CONFIG.ENABLE_FILTERS ? (p.get('c') ?? p.get('cat')) : null);
           if (CONFIG.ENABLE_SEARCH && p.get('search')) searchTerm.value = p.get('search');
 
-          const tryResolveSlug = () => {
-            if (!CONFIG.ENABLE_FILTERS || !slug || !categories.value.length) return;
-            const m = categories.value.find(c => c.slug === slug);
+          const tryResolveSlugOrId = () => {
+            if (!CONFIG.ENABLE_FILTERS || !rawCat) return;
+            if (/^\d+$/.test(rawCat)) {           // ID directo
+              activeCategory.value = parseInt(rawCat, 10);
+              return;
+            }
+            if (!categories.value.length) return; // slug, esperar categorías
+            const m = categories.value.find(c => c.slug === rawCat);
             if (m) activeCategory.value = m.id;
           };
-          return tryResolveSlug;
+          return tryResolveSlugOrId;
         };
 
         const debouncedSearch = () => {
@@ -264,7 +280,6 @@
 
         onMounted(async () => {
           const resolveSlug = loadFromURL();
-          // Primer render ya está (SSR). Sólo refetch si hay categoría resuelta posterior.
           resolveSlug && resolveSlug();
           if (activeCategory.value !== (initial.active_category ?? null)) {
             await fetchAll(currentPage.value);

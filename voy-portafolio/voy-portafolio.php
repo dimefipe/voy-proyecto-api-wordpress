@@ -1,35 +1,40 @@
 <?php
 /**
  * Plugin Name: VOY Portfolio (SSR + Vue)
- * Description: Portafolio con SSR (PHP) + Vue 3 y endpoint combinado. Shortcode: [voy_portfolio]
- * Version: 1.0.0
+ * Description: Portafolio con SSR (PHP) + Vue 3 y endpoint combinado. Shortcode: [voy_portfolio search="1" filters="1" paginator="1" per_page="8" category="" q="" page="1"]
+ * Version: 1.0.3
  * Author: VOY
  */
 
 if (!defined('ABSPATH')) exit;
 
 class VOY_Portfolio_Plugin {
+  const VERSION   = '1.0.3';
   const SHORTCODE = 'voy_portfolio';
   const NS        = 'voy/v1';
   const CPT       = 'portfolio';
   const TAX       = 'project-cat';
 
   public function __construct() {
-    add_action('init', [$this, 'register_shortcode']);
-    add_action('rest_api_init', [$this, 'register_rest']);
-    add_action('wp_enqueue_scripts', [$this, 'register_assets']);
+    add_action('init',                [$this, 'register_shortcode']);
+    add_action('rest_api_init',       [$this, 'register_rest']);
+    add_action('wp_enqueue_scripts',  [$this, 'register_assets']);
+
+    // Ayuda en el admin
+    add_action('admin_menu',                          [$this, 'admin_menu']);
+    add_filter('plugin_action_links_' . plugin_basename(__FILE__), [$this, 'action_links']);
+    add_filter('plugin_row_meta',                     [$this, 'row_meta'], 10, 2);
   }
 
+  /** ---------- Assets ----------- */
   public function register_assets() {
-    // CSS (tu CSS completo)
     wp_register_style(
       'voy-portfolio-css',
       plugins_url('assets/css/portfolio.css', __FILE__),
       [],
-      filemtime(__DIR__ . '/assets/css/portfolio.css')
+      @filemtime(__DIR__ . '/assets/css/portfolio.css') ?: self::VERSION
     );
 
-    // Vue 3 (CDN)
     wp_register_script(
       'vue3',
       'https://unpkg.com/vue@3/dist/vue.global.prod.js',
@@ -38,16 +43,16 @@ class VOY_Portfolio_Plugin {
       true
     );
 
-    // App JS
     wp_register_script(
       'voy-portfolio-app',
       plugins_url('assets/js/app.js', __FILE__),
       ['vue3'],
-      filemtime(__DIR__ . '/assets/js/app.js'),
+      @filemtime(__DIR__ . '/assets/js/app.js') ?: self::VERSION,
       true
     );
   }
 
+  /** ---------- Shortcode ----------- */
   public function register_shortcode() {
     add_shortcode(self::SHORTCODE, [$this, 'shortcode_cb']);
   }
@@ -59,16 +64,18 @@ class VOY_Portfolio_Plugin {
       'filters'    => '1',  // ENABLE_FILTERS
       'paginator'  => '1',  // ENABLE_PAGINATOR
       'per_page'   => '8',  // ITEMS_PER_PAGE
-      // Initial (deep-link opcionales)
+      // Inicial (deep-link opcionales)
       'category'   => '',   // id o slug
       'q'          => '',   // texto búsqueda
       'page'       => '',   // página inicial
     ], $atts, self::SHORTCODE);
 
-    // Lee querystring si viene (?cat, ?search, ?page)
-    $qs_page  = isset($_GET['page'])   ? intval($_GET['page']) : 0;
-    $qs_q     = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
-    $qs_cat   = isset($_GET['cat'])    ? sanitize_text_field($_GET['cat']) : '';
+    // Lee querystring si viene (?c, ?cat, ?search, ?page)
+    $qs_page = isset($_GET['page'])   ? intval($_GET['page']) : 0;
+    $qs_q    = isset($_GET['search']) ? sanitize_text_field($_GET['search']) : '';
+    // 👉 primero c, y si no existe, cat (retrocompat)
+    $qs_c    = isset($_GET['c'])      ? sanitize_text_field($_GET['c'])
+              : (isset($_GET['cat'])  ? sanitize_text_field($_GET['cat']) : '');
 
     $enable_search    = $atts['search']    === '1';
     $enable_filters   = $atts['filters']   === '1';
@@ -76,7 +83,7 @@ class VOY_Portfolio_Plugin {
     $per_page         = max(1, min(50, intval($atts['per_page'])));
 
     $initial_q     = $enable_search  ? ($qs_q ?: $atts['q']) : '';
-    $initial_cat   = $enable_filters ? ($qs_cat ?: $atts['category']) : '';
+    $initial_cat   = $enable_filters ? ($qs_c ?: $atts['category']) : '';
     $initial_page  = $enable_paginator ? ($qs_page ?: intval($atts['page']) ?: 1) : 1;
 
     // Resolver categoría (id o slug) → id
@@ -191,16 +198,16 @@ class VOY_Portfolio_Plugin {
       <div class="portafolio__filtros">
         <?php if ($enable_search): ?>
           <div class="portafolio__buscador--box">
-            <input class="portafolio__buscador" type="text"
+            <input class="portafolio__buscador voy-input" type="text"
               value="<?php echo esc_attr($initial_q); ?>" placeholder="Buscar proyectos..." />
           </div>
         <?php endif; ?>
 
         <?php if ($enable_filters): ?>
           <div class="portafolio__filtros--box">
-            <button class="<?php echo $active_cat_id ? '' : 'active'; ?>">Todo</button>
+            <button class="voy-btn <?php echo $active_cat_id ? '' : 'active'; ?>">Todo</button>
             <?php foreach ($cats as $c): ?>
-              <button class="<?php echo ($active_cat_id === $c['id']) ? 'active' : ''; ?>">
+              <button class="voy-btn <?php echo ($active_cat_id === $c['id']) ? 'active' : ''; ?>">
                 <?php echo esc_html($c['name']); ?>
               </button>
             <?php endforeach; ?>
@@ -226,7 +233,6 @@ class VOY_Portfolio_Plugin {
                       class="is-loaded"
                       loading="lazy" decoding="async"
                     />
-                    <!-- sin skeleton en SSR -->
                   </div>
                   <div class="portafolio__titulo"><h3><?php echo esc_html($it['title']['rendered']); ?></h3></div>
                 </a>
@@ -247,7 +253,7 @@ class VOY_Portfolio_Plugin {
         <?php if ($enable_paginator && $total_pages > 1): ?>
           <div class="portafolio__paginador">
             <?php for ($p = 1; $p <= $total_pages; $p++): ?>
-              <button class="<?php echo ($p === $initial_page) ? 'current' : ''; ?>"><?php echo $p; ?></button>
+              <button class="voy-btn <?php echo ($p === $initial_page) ? 'current' : ''; ?>"><?php echo $p; ?></button>
             <?php endfor; ?>
           </div>
         <?php endif; ?>
@@ -270,6 +276,7 @@ class VOY_Portfolio_Plugin {
     return ob_get_clean();
   }
 
+  /** ---------- REST ---------- */
   public function register_rest() {
     register_rest_route(self::NS, '/portfolio', [
       'methods'  => 'GET',
@@ -362,15 +369,99 @@ class VOY_Portfolio_Plugin {
     $total       = (int)$q->found_posts;
     $total_pages = (int)$q->max_num_pages;
 
-    // Puedes habilitar cache público/CDN si quieres
-    // header('Cache-Control: public, max-age=300, s-maxage=600');
-
     return new WP_REST_Response([
       'projects'     => $items,
       'categories'   => $cats_list,
       'total'        => $total,
       'total_pages'  => $total_pages,
     ], 200);
+  }
+
+  /** ---------- Admin: Ayuda/links ---------- */
+  public function admin_menu() {
+    add_options_page(
+      'VOY Portfolio – Ayuda',
+      'VOY Portfolio – Ayuda',
+      'manage_options',
+      'voy-portfolio-help',
+      [$this, 'render_help_page']
+    );
+  }
+
+  public function action_links($links) {
+    $help = '<a href="' . esc_url(admin_url('options-general.php?page=voy-portfolio-help')) . '">'. esc_html__('Ayuda / Shortcode', 'voy') .'</a>';
+    array_unshift($links, $help);
+    return $links;
+  }
+
+  public function row_meta($links, $file) {
+    if ($file === plugin_basename(__FILE__)) {
+      $links[] = '<code>[voy_portfolio search="1" filters="1" paginator="1" per_page="8" category="" q="" page="1"]</code>';
+      $links[] = '<span>Deep-link: <code>?c=branding</code> o <code>?c=22</code></span>';
+    }
+    return $links;
+  }
+
+  public function render_help_page() {
+    ?>
+    <div class="wrap">
+      <h1>VOY Portfolio — Ayuda rápida</h1>
+      <p>Inserta el portafolio en cualquier página o plantilla con el siguiente shortcode:</p>
+
+      <p>
+        <code id="voy-sc">[voy_portfolio search="1" filters="1" paginator="1" per_page="8" category="" q="" page="1"]</code>
+        <button class="button button-primary" onclick="copyVoySC('#voy-sc')">Copiar</button>
+      </p>
+
+      <h2>Atributos</h2>
+      <table class="widefat striped">
+        <tbody>
+          <tr><td><code>search</code></td><td>Habilita buscador (1/0). Por defecto <code>1</code>.</td></tr>
+          <tr><td><code>filters</code></td><td>Habilita filtros de categorías (1/0). Por defecto <code>1</code>.</td></tr>
+          <tr><td><code>paginator</code></td><td>Habilita paginación (1/0). Por defecto <code>1</code>.</td></tr>
+          <tr><td><code>per_page</code></td><td>Ítems por página (1–50). Por defecto <code>8</code>.</td></tr>
+          <tr><td><code>category</code></td><td>Categoría inicial por <strong>slug</strong> o <strong>ID</strong>. Ej: <code>branding</code> o <code>22</code>.</td></tr>
+          <tr><td><code>q</code></td><td>Texto inicial de búsqueda.</td></tr>
+          <tr><td><code>page</code></td><td>Página inicial (si usas paginador).</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Deep-link (URL compartible)</h2>
+      <p>La UI escribe y entiende <code>?c=</code> para la categoría (también entiende <code>?cat=</code> por compatibilidad), además de <code>?search=</code> y <code>?page=</code>.</p>
+      <ul style="list-style: disc; padding-left: 1.5rem;">
+        <li><code>?c=branding</code> → filtra por el <em>slug</em> <strong>branding</strong>.</li>
+        <li><code>?c=22</code> → filtra por la categoría <em>ID</em> <strong>22</strong>.</li>
+        <li><code>?search=colegio</code> → aplica búsqueda inicial.</li>
+        <li><code>?page=2</code> → abre directamente en la página 2.</li>
+      </ul>
+
+      <h2>Ejemplos</h2>
+      <p><strong>Básico:</strong><br>
+        <code>[voy_portfolio]</code>
+      </p>
+      <p><strong>Grid de 12, sin buscador:</strong><br>
+        <code>[voy_portfolio per_page="12" search="0"]</code>
+      </p>
+      <p><strong>Partir en “branding”, página 2:</strong><br>
+        <code>[voy_portfolio category="branding" page="2"]</code>
+      </p>
+
+      <script>
+        function copyVoySC(sel){
+          const el = document.querySelector(sel);
+          if(!el) return;
+          const range = document.createRange();
+          range.selectNode(el);
+          const selObj = window.getSelection();
+          selObj.removeAllRanges();
+          selObj.addRange(range);
+          try{ document.execCommand('copy'); }catch(e){}
+          selObj.removeAllRanges();
+          alert('Shortcode copiado');
+        }
+      </script>
+    </div>
+    <?php
   }
 }
 

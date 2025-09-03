@@ -1,220 +1,179 @@
-
-  /* ====== CONTENEDOR APP ====== */
-  #portafolioApp {
-      font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-      max-width: 1140px;
-      margin: auto;
-      height: auto;
-      min-height: 0;
-      --filters-top: 0px;
-  }
-
-  @media screen and (max-width: 768px) {
-    #portafolioApp { --filters-top: 60px; }
-  }
-
-  #portafolioApp .portafolio__listado {
-    padding-top: var(--filters-top);
-  }
-  #portafolioApp a { text-decoration: none; }
-  #portafolioApp button, #portafolioApp input {
-      font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  }
-  #portafolioApp input { padding: 0.75rem 1rem; }
-  #portafolioApp input:focus { outline: none; }
-  #portafolioApp button {
-      transition: 0.2s ease-in-out; cursor: pointer; padding: 0.5rem 1rem; outline: none; border: none;
-  }
-
-  /* ====== FILTROS ====== */
-  #portafolioApp .portafolio__filtros{
-      display:flex; flex-direction:column; gap:1rem; justify-content:center; align-items:center; margin-bottom:2rem;
-  }
-  #portafolioApp .portafolio__buscador--box{ width:100%; display:flex; justify-content:center; }
-  #portafolioApp .portafolio__buscador{
-      background:#e9f6f8!important; border:3px solid #88bac1!important; border-radius:24px!important;
-      text-align:center; max-width:600px!important; width:100%!important;
-  }
-  #portafolioApp .portafolio__buscador:focus{ border:3px solid #ffb000!important; }
-  @media (max-width:1024px){
-      #portafolioApp .portafolio__buscador--box{ padding-top:.5rem; margin-bottom:.5rem; }
-      #portafolioApp .portafolio__buscador{ border:2px solid #88bac1!important; }
-      #portafolioApp .portafolio__buscador:focus{ border:2px solid #ffb000!important; }
-  }
-  @media (max-width:767px){
-      #portafolioApp .portafolio__buscador{
-          font-size:12px!important; padding:6px!important; min-height:inherit!important; height:inherit!important; border:2px solid #88bac1!important;
-      }
-      #portafolioApp .portafolio__buscador:focus{ border:2px solid #ffb000!important; }
-  }
-
-  #portafolioApp .portafolio__filtros--box{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
-  #portafolioApp .portafolio__filtros button{ background:#00272d; color:#fff; border:1px solid #00424d; border-radius:8px; }
-  #portafolioApp .portafolio__filtros button:hover{ background:#00b5cf; }
-  #portafolioApp .portafolio__filtros button.active{ background:#ffb000; color:#001519; }
-
-  /* ====== GRID ====== */
-  #portafolioApp .portafolio__proyectos{
-      display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1rem; --m-top:70px; padding-top:0px!important;
-  }
-  #portafolioApp .portafolio__proyectos-wrapper{ display:flow-root; margin-bottom:1rem; }
-
-  /* ====== CARD ====== */
-  #portafolioApp .portafolio__proyecto{
-      background:#00272d; border:1px solid #00424d; border-radius:16px; padding:20px; position:relative;
-      display:flex; flex-direction:column; justify-content:space-between; gap:8px;
-      margin-top:var(--m-top); margin-bottom:calc(var(--m-top) / 5); isolation:isolate;
-  }
-  #portafolioApp .portafolio__proyecto a{ display:flex; flex-direction:column; gap:8px; }
-
-  /* Imagen con skeleton propio */
-  #portafolioApp .portafolio__img{ aspect-ratio:1/1; position:relative; margin-top:calc(-1 * var(--m-top)); }
-  #portafolioApp .portafolio__img img{
-      display:block; width:100%; aspect-ratio:1/1; object-fit:cover;
-      mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
-      opacity:0; transition:opacity .3s ease-in-out, transform .3s ease-in-out;
-  }
-  #portafolioApp .portafolio__img img.is-loaded{ opacity:1; }
-  #portafolioApp .img-skeleton{ position:absolute; inset:0; pointer-events:none; z-index:1; }
-  #portafolioApp .img-skeleton .skeleton-box{ height:100%; width:100%; border-radius:12px; }
-
-  #portafolioApp .portafolio__titulo h3{ color:#fff; font-size:16px; margin:0; transition:.3s; }
-  #portafolioApp .portafolio__proyecto a:hover h3{ color:#ffb000; }
-  #portafolioApp .portafolio__proyecto a:hover .portafolio__img img{ transform:scale(1.19) translateY(-20px); }
-
-  #portafolioApp .portafolio__categorias{ display:flex; flex-wrap:wrap; gap:10px; }
-  #portafolioApp .portafolio__categoria{
-      background:#00272d; border:1px solid #00424d; width:max-content; color:#b7bbbc;
-      padding:4px 8px; border-radius:8px; font-size:10px; cursor:pointer !important;
-      user-select:none; -webkit-user-select:none; display:inline-flex; align-items:center; line-height:1;
-  }
-  #portafolioApp .portafolio__categoria:hover{ background:#ffb000; color:#001519; }
-  #portafolioApp .portafolio__categoria *{ cursor:inherit; }
-
-  /* ====== SKELETON (listado inicial) ====== */
-  #portafolioApp .skeleton .portafolio__categoria{ pointer-events:none; }
-  #portafolioApp .skeleton-box{ position:relative; overflow:hidden; background:#09343b; border-radius:8px; }
-  #portafolioApp .skeleton-box::after{
-      content:""; position:absolute; inset:0; transform:translateX(-100%);
-      background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 100%);
-      animation:sk-shimmer 1.2s linear infinite; will-change:transform;
-  }
-  #portafolioApp .skeleton-img{ width:100%; aspect-ratio:1/1; border-radius:12px; }
-  #portafolioApp .skeleton-line{ height:14px; margin-top:10px; border-radius:6px; }
-  #portafolioApp .skeleton-title{ width:70%; }
-  #portafolioApp .skeleton-pill{ display:inline-block; height:18px; width:92px; border-radius:8px; border:1px solid #00424d; }
-  #portafolioApp .skeleton-pill.short{ width:64px; }
-
-  /* ====== TRANSITION-GROUP (entradas/salidas/reordenamientos) ====== */
-  #portafolioApp .card-enter-from{ opacity:0; transform:translateY(8px); }
-  #portafolioApp .card-enter-active{ transition:opacity .35s ease, transform .35s ease; }
-  #portafolioApp .card-enter-to{ opacity:1; transform:none; }
-
-  #portafolioApp .card-leave-from{ opacity:1; transform:none; }
-  #portafolioApp .card-leave-active{ transition:opacity .25s ease, transform .25s ease; pointer-events:none; }
-  #portafolioApp .card-leave-to{ opacity:0; transform:translateY(-4px); }
-
-  #portafolioApp .card-move{ transition:transform .35s ease; will-change:transform; }
-
-  /* 👉 primer pintado tras skeleton */
-  #portafolioApp .card-appear-from{ opacity:0; transform:translateY(8px); }
-  #portafolioApp .card-appear-active{ transition:opacity .35s ease, transform .35s ease; }
-  #portafolioApp .card-appear-to{ opacity:1; transform:none; }
-
-  @media (prefers-reduced-motion: reduce){
-      #portafolioApp .card-enter-active,
-      #portafolioApp .card-leave-active,
-      #portafolioApp .card-appear-active,
-      #portafolioApp .card-move{ transition:none !important; }
-  }
-
-  /* ====== PAGINADOR / EMPTY ====== */
-  #portafolioApp .portafolio__paginador{ display:flex; justify-content:center; gap:1rem; }
-  #portafolioApp .portafolio__paginador button{
-      font-size:12px; padding:8px 16px; border-radius:8px; background:#00272d; border:1px solid #00424d;
-      color:hsla(200,50%,100%,.7);
-  }
-  #portafolioApp .portafolio__paginador button.current{ background:#00b5cf!important; color:#fff!important; }
-  #portafolioApp .no-results{
-      color:#fff; text-align:center; padding:2rem; opacity:.5; display:flex; justify-content:center; align-items:center;
-      padding-bottom:100px; grid-column:1/-1;
-  }
-  #portafolioApp .no-results p{ margin:0; }
-
-  /* ====== TABLET / MÓVIL ====== */
-  @media (max-width:1024px){
-      #portafolioApp .portafolio__filtros button{ font-size:14px; }
-      #portafolioApp .portafolio__proyectos{ grid-template-columns:repeat(3, minmax(0, 1fr)); --m-top:60px; }
-      #portafolioApp .skeleton-title{ width:80%; }
-      #portafolioApp .skeleton-pill{ height:18px; }
-  }
-  @media (max-width:767px){
-      #portafolioApp .portafolio__filtros{
-          position:sticky; gap:.5rem; top:var(--filters-top); z-index:3; background:#001519;
-          mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
-          padding-top:.5rem; padding-bottom:1rem;
-      }
-      #portafolioApp .portafolio__filtros button{ font-size:10px; padding:6px 10px; line-height:1em; min-height:inherit; }
-      #portafolioApp .portafolio__proyectos{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; --m-top:50px; }
-      #portafolioApp .portafolio__proyecto{ padding:12px; }
-      #portafolioApp .portafolio__titulo h3{ font-size:12px; }
-      #portafolioApp .portafolio__categoria{ padding:2px 6px; font-size:8px; text-decoration:none; }
-      #portafolioApp .portafolio__paginador{ gap:.5rem; }
-      #portafolioApp .portafolio__paginador button{ font-size:10px; padding:4px 12px; border-radius:8px; }
-      #portafolioApp .skeleton-title{ width:85%; }
-      #portafolioApp .skeleton-pill{ height:16px; }
-  }
-
-  /* ====== SHIMMER KEYFRAMES (incluye fallback Safari) ====== */
-  @-webkit-keyframes sk-shimmer { 100% { -webkit-transform: translateX(100%); transform: translateX(100%); } }
-  @keyframes sk-shimmer { 100% { transform: translateX(100%); } }
-
-  /* --- FIX flicker/ghost en paginación --- */
-
-/* El grid crea el contexto para posicionar los elementos que salen */
-#portafolioApp .portafolio__proyectos{
-  position: relative;            /* clave para que lo absoluto se ancle aquí */
+/* ====== AISLAMIENTO BOTONES / INPUT ====== */
+:is(.voy-portfolio-root, #portafolioApp) .voy-btn{
+  /* reset duro para que el tema no meta mano */
+  all: unset;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  line-height: 1;
+}
+:is(.voy-portfolio-root, #portafolioApp) .voy-input{
+  -webkit-appearance:none;
+  appearance:none;
+  box-shadow:none !important;
+  font: inherit;
 }
 
-/* Las cards que salen ya no ocupan espacio ni tapan a las nuevas */
-#portafolioApp .card-leave-active{
-  position: absolute !important; /* fuera del flujo del grid */
-  z-index: -1 !important;        /* por debajo de las cards nuevas */
-  pointer-events: none;          /* no bloquea interacciones */
-  transition: opacity 0s linear !important;  /* salida rápida y limpia */
+/* ====== CONTENEDOR APP ====== */
+:is(.voy-portfolio-root, #portafolioApp){
+  font-family: Unbounded, "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  max-width: 1140px;
+  margin: auto;
+  height: auto;
+  min-height: 0;
+  --filters-top: 0px;
+}
+@media screen and (max-width: 768px){
+  :is(.voy-portfolio-root, #portafolioApp){ --filters-top: 60px; }
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__listado{ padding-top: var(--filters-top); }
+:is(.voy-portfolio-root, #portafolioApp) a{ text-decoration:none; }
+
+/* ====== FILTROS ====== */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros{
+  display:flex; flex-direction:column; gap:1rem; justify-content:center; align-items:center; margin-bottom:2rem;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador--box{ width:100%; display:flex; justify-content:center; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador{
+  background:#e9f6f8!important; border:3px solid #88bac1!important; border-radius:24px!important;
+  text-align:center; max-width:600px!important; width:100%!important;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador.voy-input:focus{ border:3px solid #ffb000!important; }
+@media (max-width:1024px){
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador--box{ padding-top:.5rem; margin-bottom:.5rem; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador{ border:2px solid #88bac1!important; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador.voy-input:focus{ border:2px solid #ffb000!important; }
+}
+@media (max-width:767px){
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador{
+    font-size:12px!important; padding:6px!important; min-height:inherit!important; height:inherit!important; border:2px solid #88bac1!important;
+  }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__buscador.voy-input:focus{ border:2px solid #ffb000!important; }
 }
 
-/* Evita “saltos” visuales: no queremos translate en la salida */
-#portafolioApp .card-leave-to{
-  opacity: 0 !important;
-  transform: none !important;
+/* Botones de filtros con la clase aislada */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros--box{ display:flex; gap:12px; flex-wrap:wrap; justify-content:center; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros .voy-btn{
+  background:#00272d; color:#fff; border:1px solid #00424d; border-radius:8px; padding:8px 12px; transition:.2s ease-in-out;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros .voy-btn:hover{ background:#00b5cf; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros .voy-btn.active{ background:#ffb000; color:#001519; }
+
+/* ====== GRID ====== */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyectos{
+  display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:1rem; --m-top:70px; padding-top:0px!important;
+  position:relative; /* contexto para animaciones leave */
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyectos-wrapper{ display:flow-root; margin-bottom:1rem; }
+
+/* ====== CARD ====== */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyecto{
+  background:#00272d; border:1px solid #00424d; border-radius:16px; padding:20px; position:relative;
+  display:flex; flex-direction:column; justify-content:space-between; gap:8px;
+  margin-top:var(--m-top); margin-bottom:calc(var(--m-top) / 5); isolation:isolate;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyecto a{ display:flex; flex-direction:column; gap:8px; }
+
+/* Imagen + skeleton */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__img{ aspect-ratio:1/1; position:relative; margin-top:calc(-1 * var(--m-top)); }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__img img{
+  display:block; width:100%; aspect-ratio:1/1; object-fit:cover;
+  mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 60%, rgba(0,0,0,0) 100%);
+  opacity:0; transition:opacity .3s ease-in-out, transform .3s ease-in-out;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__img img.is-loaded{ opacity:1; }
+:is(.voy-portfolio-root, #portafolioApp) .img-skeleton{ position:absolute; inset:0; pointer-events:none; z-index:1; }
+:is(.voy-portfolio-root, #portafolioApp) .img-skeleton .skeleton-box{ height:100%; width:100%; border-radius:12px; }
+
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__titulo h3{ color:#fff; font-size:16px; margin:0; transition:.3s; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyecto a:hover h3{ color:#ffb000; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__proyecto a:hover .portafolio__img img{ transform:scale(1.19) translateY(-20px); }
+
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__categorias{ display:flex; flex-wrap:wrap; gap:10px; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__categoria{
+  background:#00272d; border:1px solid #00424d; width:max-content; color:#b7bbbc;
+  padding:4px 8px; border-radius:8px; font-size:10px; cursor:pointer !important;
+  user-select:none; -webkit-user-select:none; display:inline-flex; align-items:center; line-height:1;
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__categoria:hover{ background:#ffb000; color:#001519; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__categoria *{ cursor:inherit; }
+
+/* ====== SKELETON ====== */
+:is(.voy-portfolio-root, #portafolioApp) .skeleton .portafolio__categoria{ pointer-events:none; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-box{ position:relative; overflow:hidden; background:#09343b; border-radius:8px; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-box::after{
+  content:""; position:absolute; inset:0; transform:translateX(-100%);
+  background:linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,.06) 50%, rgba(255,255,255,0) 100%);
+  animation: sk-shimmer 1.2s linear infinite !important;
+  will-change: transform;
+}
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-img{ width:100%; aspect-ratio:1/1; border-radius:12px; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-line{ height:14px; margin-top:10px; border-radius:6px; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-title{ width:70%; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-pill{ display:inline-block; height:18px; width:92px; border-radius:8px; border:1px solid #00424d; }
+:is(.voy-portfolio-root, #portafolioApp) .skeleton-pill.short{ width:64px; }
+
+/* ====== TRANSITION-GROUP ====== */
+:is(.voy-portfolio-root, #portafolioApp) .card-enter-from{ opacity:0; transform:translateY(8px); }
+:is(.voy-portfolio-root, #portafolioApp) .card-enter-active{ transition:opacity .35s ease, transform .35s ease !important; }
+:is(.voy-portfolio-root, #portafolioApp) .card-enter-to{ opacity:1; transform:none; }
+
+:is(.voy-portfolio-root, #portafolioApp) .card-leave-from{ opacity:1; transform:none; }
+:is(.voy-portfolio-root, #portafolioApp) .card-leave-active{ transition:opacity .25s ease, transform .25s ease !important; pointer-events:none; }
+:is(.voy-portfolio-root, #portafolioApp) .card-leave-to{ opacity:0; transform:translateY(-4px); }
+
+:is(.voy-portfolio-root, #portafolioApp) .card-move{ transition:transform .35s ease; will-change:transform; }
+
+:is(.voy-portfolio-root, #portafolioApp) .card-appear-from{ opacity:0; transform:translateY(8px); }
+:is(.voy-portfolio-root, #portafolioApp) .card-appear-active{ transition:opacity .35s ease, transform .35s ease !important; }
+:is(.voy-portfolio-root, #portafolioApp) .card-appear-to{ opacity:1; transform:none; }
+
+@media (prefers-reduced-motion: reduce){
+  :is(.voy-portfolio-root, #portafolioApp) .card-enter-active,
+  :is(.voy-portfolio-root, #portafolioApp) .card-leave-active,
+  :is(.voy-portfolio-root, #portafolioApp) .card-appear-active,
+  :is(.voy-portfolio-root, #portafolioApp) .card-move{ transition:none !important; }
 }
 
-/* Desactivar transición al salir (leave) */
-#portafolioApp .card-leave-active,
-#portafolioApp .card-leave-from,
-#portafolioApp .card-leave-to{
-  transition: none !important;
-  opacity: 1 !important;
-  transform: none !important;
+/* ====== PAGINADOR / EMPTY ====== */
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__paginador{ display:flex; justify-content:center; gap:1rem; }
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__paginador .voy-btn{
+  font-size:12px; padding:8px 16px; border-radius:8px; background:#00272d; border:1px solid #00424d; color:hsla(200,50%,100%,.7);
+}
+:is(.voy-portfolio-root, #portafolioApp) .portafolio__paginador .voy-btn.current{ background:#00b5cf; color:#fff; }
+:is(.voy-portfolio-root, #portafolioApp) .no-results{
+  color:#fff; text-align:center; padding:2rem; opacity:.5; display:flex; justify-content:center; align-items:center;
+  padding-bottom:100px; grid-column:1/-1;
+}
+:is(.voy-portfolio-root, #portafolioApp) .no-results p{ margin:0; }
+
+/* ====== TABLET / MÓVIL ====== */
+@media (max-width:1024px){
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros .voy-btn{ font-size:14px; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__proyectos{ grid-template-columns:repeat(3, minmax(0, 1fr)); --m-top:60px; }
+  :is(.voy-portfolio-root, #portafolioApp) .skeleton-title{ width:80%; }
+  :is(.voy-portfolio-root, #portafolioApp) .skeleton-pill{ height:18px; }
+}
+@media (max-width:767px){
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros{
+    position:sticky; gap:.5rem; top:var(--filters-top); z-index:3; background:#001519;
+    mask-image:linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 90%, rgba(0,0,0,0) 100%);
+    padding-top:.5rem; padding-bottom:1rem;
+  }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__filtros .voy-btn{ font-size:10px; padding:6px 10px; line-height:1em; min-height:inherit; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__proyectos{ grid-template-columns:repeat(2, minmax(0, 1fr)); gap:1rem; --m-top:50px; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__proyecto{ padding:12px; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__titulo h3{ font-size:12px; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__categoria{ padding:2px 6px; font-size:8px; text-decoration:none; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__paginador{ gap:.5rem; }
+  :is(.voy-portfolio-root, #portafolioApp) .portafolio__paginador .voy-btn{ font-size:10px; padding:4px 12px; border-radius:8px; }
+  :is(.voy-portfolio-root, #portafolioApp) .skeleton-title{ width:85%; }
+  :is(.voy-portfolio-root, #portafolioApp) .skeleton-pill{ height:16px; }
 }
 
-  /* ——— eliminar por completo reordenamientos (move) ——— */
-#portafolioApp .card-move{
-  transition: none !important;      /* sin animación de reordenamiento */
-  transform: none !important;
-}
-
-/* ——— asegurar que cualquier elemento en 'leave' sea invisible ——— */
-#portafolioApp .card-leave-active,
-#portafolioApp .card-leave-from,
-#portafolioApp .card-leave-to{
-  transition: none !important;       /* sin transiciones de salida */
-  opacity: 0 !important;             /* invisible incluso si Vue lo deja 1 frame */
-  visibility: hidden !important;
-  pointer-events: none !important;
-  transform: none !important;
-  position: static !important;       /* evita overlays absolutas */
-  z-index: -1 !important;            /* por si algún estilo lo deja arriba */
-}
-
+/* ====== SHIMMER KEYFRAMES ====== */
+@-webkit-keyframes sk-shimmer { 100% { -webkit-transform: translateX(100%); transform: translateX(100%); } }
+@keyframes sk-shimmer { 100% { transform: translateX(100%); } }
