@@ -382,3 +382,168 @@ build/
 - [ ] **Cache de taxonomías** en `localStorage` con TTL (ej. 24h).  
 
 ---
+# Apéndice — Integración nueva API y migración del front (Secciones 13–21)
+
+Este documento complementa la guía original (secciones 1–12). Aquí se documenta lo que continuamos haciendo: **endpoint combinado**, **cache**, validaciones y **migración del front a la nueva API**.
+
+---
+
+## 13. Nueva API combinada `voy/v1/portfolio`
+
+**Objetivo:** reducir a **una sola llamada** la data de portafolio + categorías y simplificar el front.
+
+**Ruta base**
+```
+https://voy.digital/wp-json/voy/v1/portfolio
+```
+
+**Query params**
+- `page` *(int, default 1)*
+- `per_page` *(int, default 8, máx 50)*
+- `search` *(string, opcional)*
+- `category` *(id numérico o slug, opcional)*
+
+**Respuesta (resumen)**
+```json
+{
+  "projects": [
+    {
+      "id": 1008,
+      "title": { "rendered": "Sofor" },
+      "link": "https://voy.digital/portafolio/sofor/",
+      "image": "https://voy.digital/.../miniatura.webp",
+      "srcset": "..., 768w, 1024w",
+      "project_cat_links": [
+        {"id":21,"name":"Branding","slug":"branding"},
+        {"id":22,"name":"Video y Motion","slug":"video-y-motion"}
+      ]
+    }
+  ],
+  "categories": [
+    {"id":21,"name":"Branding","slug":"branding"},
+    {"id":22,"name":"Video y Motion","slug":"video-y-motion"},
+    {"id":19,"name":"Web","slug":"web"}
+  ],
+  "total": 23,
+  "total_pages": 3
+}
+```
+
+**Ejemplos**
+```
+/voy/v1/portfolio?page=2
+/voy/v1/portfolio?search=pekes
+/voy/v1/portfolio?category=web
+/voy/v1/portfolio?category=22
+```
+
+---
+
+## 14. Mini-plugin (MU) del endpoint
+
+**Ubicación:** `wp-content/mu-plugins/voy-endpoints.php`  
+**Por qué MU:** se carga siempre, aunque alguien desactive plugins desde el admin.
+
+**Hace:**
+- Registra `voy/v1/portfolio`.
+- Acepta `category` por **id o slug**.
+- Devuelve **projects + categories + total_pages**.
+- Normaliza **imagen/srcset** y categorías por post.
+
+> Si en el futuro quieres limitar el acceso, cambia `permission_callback` (ahora está en `__return_true`) y añade controles de origen, nonces o autenticación.
+
+---
+
+## 15. Cache en servidor + CDN
+
+**Plugin:** WP REST Cache (Acató).  
+- Mantuvimos valores por defecto (timeout largo).  
+- El plugin invalida cache cuando editas contenido en WP-Admin.  
+- Puedes activar cron de regeneración si quieres (`Enable cache regeneration`).
+
+**Cómo comprobar el HIT en DevTools → Network → Headers:**
+- En respuestas del endpoint deberías ver:
+  - `X-Wp-Cached-Call: served-cache` ✅ (HIT)
+  - `X-Wp-Total`, `X-Wp-Totalpages` (metadatos útiles)
+- Si ves `no-store` en **request headers** es tu browser pidiéndolo así; la **respuesta** sigue pudiendo salir del cache del servidor.
+
+**Cloudflare (si aplica):**
+- Respeta `Cache-Control` por defecto del plugin.
+- Evita “Cache Everything” para `/wp-json/*` salvo que sepas lo que haces.
+- Si activas CF cache para REST, usa una **Page Rule** con TTL y purga al publicar.
+
+---
+
+## 16. Migración del front al nuevo endpoint
+
+En el script Vue:
+
+1) **API base**
+```js
+// Antes
+const API_BASE = 'https://voy.digital/wp-json/wp/v2';
+// Ahora
+const API_BASE = 'https://voy.digital/wp-json/voy/v1';
+```
+
+2) **Reemplazar `fetchCategories` + `fetchProjects` por `fetchAll`** (una sola llamada):
+- Usa `GET /voy/v1/portfolio?page=&per_page=&search=&category=`.
+- Mapea `data.projects` y `data.categories`.
+- Mantén `PLACEHOLDER`, `skeletons`, `debounce`, `AbortController` y paginación.
+
+3) **Compatibilidad de filtros**  
+- La UI sigue igual. `activeCategory` guarda **ID**; del URL (`?cat=slug`) se resuelve a ID tras la primera carga de categorías.
+
+> Ya dejé el **script completo** migrado (solo reemplaza tu `<script>` actual).
+
+---
+
+## 17. QA / Pruebas sugeridas
+
+- **Listar**: `/voy/v1/portfolio?page=1&per_page=8`
+- **Buscar**: `/voy/v1/portfolio?search=pekes`
+- **Por slug**: `/voy/v1/portfolio?category=web`
+- **Por id**: `/voy/v1/portfolio?category=22`
+- Verifica en DevTools:
+  - `Status 200`
+  - `X-Wp-Cached-Call: served-cache` en segundas visitas
+  - Tiempos: primera vs. repetida (debe bajar)
+- En UI:  
+  - Skeleton global y por imagen.  
+  - Paginación correcta (botones y `total_pages`).  
+  - Filtros y búsqueda resetean/actualizan URL y estado.
+
+---
+
+## 18. Observabilidad y fallback
+
+- En front, cualquier error de imagen → `PLACEHOLDER` y quitar `srcset`.
+- En errores de red (excepto `AbortError`) → lista vacía y `total_pages = 1`.
+- Si la búsqueda/no hay resultados → “**Sin resultados**” centrado.
+
+---
+
+## 19. Seguridad y CORS (opcional)
+
+- Endpoint actualmente abierto (`permission_callback => __return_true`).
+- Si necesitas restricciones:
+  - Permitir solo `GET` desde **dominios conocidos** (cabeceras/CORS).
+  - Añadir firma/HMAC o Nonce si hay riesgo de abuso.
+  - Limitar `per_page` (ya se topa en 50).
+
+---
+
+## 20. Mantenimiento
+
+- **Nuevos proyectos/categorías** → el plugin de cache invalida automáticamente.
+- Si cambias tamaños de imagen en WP → **regenera miniaturas**.
+- Si renuevas slugs de categorías → confirmarlo en URLs compartidas (`?cat=slug`).
+
+---
+
+## 21. Changelog (resumen)
+
+- **feat(api):** endpoint combinado `voy/v1/portfolio` (proyectos + categorías).
+- **perf(cache):** WP REST Cache activo; verificación de `X-Wp-Cached-Call`.
+- **feat(front):** migración del script a la nueva API; una sola llamada por vista.
+- **ux:** mantiene skeletons, debounce y transiciones; URL stateful con `?cat, ?page, ?search`.
